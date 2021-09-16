@@ -7,7 +7,7 @@ const restricted = (req, res, next) => {
   if (!token)
     return next({
       status: 401,
-      message: "token required",
+      message: "Token required",
     });
 
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
@@ -15,7 +15,6 @@ const restricted = (req, res, next) => {
       return next({
         status: 401,
         message: "Token invalid",
-        realErrorMessage: err.message,
       });
     req.decodedJwt = decoded;
     next();
@@ -81,15 +80,20 @@ const checkUsernameExists = async (req, res, next) => {
 
 const validateRoleName = (req, res, next) => {
   try {
-    const { role_name } = req.body;
-    const trimmed = role_name.trim()
-    if (trimmed === "" || !role_name) {
-      req.role_name = "student";
-      next();
-    } else if (trimmed === "admin") {
-      next({ status: 422, message: "Role name can not be admin" });
-    } else if (trimmed.length > 32) {
-      next({ status: 422, message: "Role name can not be longer than 32 chars" });
+    if (!req.body.role_name || !req.body.role_name.trim()){
+      req.role_name = 'student'
+      next()
+    }else if (req.body.role_name.trim() === 'admin'){
+      next({status:422, message: 'Role name can not be admin'})
+    }else if (req.body.role_name.trim().length > 32){
+      next({status:422, message: 'Role name can not be longer than 32 chars'})
+    }else if (req.body.role_name.trim() === 'instructor'){
+      req.role_name = 'instructor'
+      next()
+    }else{
+      req.role_name = req.role_name.trim()
+      req.role_id = req.role_id.increments()
+      next()
     }
   } catch (err) {
     next(err);
